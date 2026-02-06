@@ -1,43 +1,51 @@
 package edu.narxoz.galactic;
 
+import edu.narxoz.galactic.bodies.CelestialBody;
 import edu.narxoz.galactic.bodies.Planet;
+import edu.narxoz.galactic.bodies.SpaceStation;
 import edu.narxoz.galactic.cargo.Cargo;
 import edu.narxoz.galactic.dispatcher.Dispatcher;
 import edu.narxoz.galactic.dispatcher.Result;
-import edu.narxoz.galactic.drones.HeavyDrone;
-import edu.narxoz.galactic.drones.LightDrone;
+import edu.narxoz.galactic.drones.Drone;
+import edu.narxoz.galactic.factory.DroneFactory;
+import edu.narxoz.galactic.factory.DroneTypes;
+import edu.narxoz.galactic.factory.Mission;
+import edu.narxoz.galactic.factory.MissionFactory;
 import edu.narxoz.galactic.task.DeliveryTask;
 
 public class Demo {
+
     public static void main(String[] args) {
-        Planet earth = new Planet("Earth", 0, 0, "Nitrogen-Oxygen");
-        Planet mars = new Planet("Mars", 100, 0, "Carbon Dioxide");
+        MissionFactory missionFactory = new Mission();
+        CelestialBody origin = missionFactory.createOrigin();
+        CelestialBody destination = new SpaceStation("Orbital Station Alpha", 150, 50, 3);
 
-        Cargo cargo = new Cargo(15, "Heavy equipment");
+        Cargo cargo = missionFactory.createCargo();
 
-        LightDrone light = new LightDrone("LD001", 10);
-        HeavyDrone heavy = new HeavyDrone("HD001", 20);
+        DroneFactory droneFactory = new DroneTypes();
+        Drone lightDrone = droneFactory.createDrone("LD-001", 10);
+        Drone heavyDrone = droneFactory.createDrone("HD-001", 20);
 
-        DeliveryTask task = new DeliveryTask(earth, mars, cargo);
-
+        DeliveryTask task = new DeliveryTask(origin, destination, cargo);
         Dispatcher dispatcher = new Dispatcher();
 
-        System.out.println("Assign to LightDrone:");
-        Result r1 = dispatcher.assignTask(task, light);
-        System.out.println(r1.ok() ? "Success" : "Fail: " + r1.reason());
+        System.out.println("Assigning LightDrone (max payload 10 kg):");
+        Result result1 = dispatcher.assignTask(task, lightDrone);
+        System.out.println(result1.ok() ? "Success" : "Fail: " + result1.reason());
 
-        System.out.println("\nAssign to HeavyDrone:");
-        Result r2 = dispatcher.assignTask(task, heavy);
-        System.out.println(r2.ok() ? "Success" : "Fail: " + r2.reason());
+        System.out.println("Assigning HeavyDrone (max payload 20 kg):");
+        Result result2 = dispatcher.assignTask(task, heavyDrone);
+        System.out.println(result2.ok() ? "Success" : "Fail: " + result2.reason());
 
-        if (r2.ok()) {
-            System.out.println("\nEstimated time: " + task.estimateTime() + " min");
+        if (result2.ok()) {
+            System.out.println("Estimated delivery time: " + task.estimateTime() + " minutes");
 
-            System.out.println("\nComplete task:");
-            Result r3 = dispatcher.completeTask(task);
-            System.out.println(r3.ok() ? "Success" : "Fail: " + r3.reason());
+            System.out.println("Completing task:");
+            Result result3 = dispatcher.completeTask(task);
+            System.out.println(result3.ok() ? "Success" : "Fail: " + result3.reason());
 
-            System.out.println("Drone status: " + heavy.getStatus());
+            System.out.println("Final state:");
+            System.out.println("Drone status: " + heavyDrone.getStatus());
             System.out.println("Task state: " + task.getState());
         }
     }
